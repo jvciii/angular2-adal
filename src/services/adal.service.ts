@@ -32,6 +32,9 @@ export class AdalService {
 
         // create instance with given config
         this.adalContext = adalLib.inject(configOptions);
+        
+        window.AuthenticationContext = this.adalContext.constructor;
+
 
         // loginresource is used to set authenticated status
         this.updateDataFromCache(this.adalContext.config.loginResource);
@@ -74,29 +77,31 @@ export class AdalService {
     }
 
     public acquireToken(resource: string) {
-        return Observable.bindCallback(function (cb) {
-            this.adalContext.acquireToken(resource, function (error: string, tokenOut: string) {
-                if (error) {
-                    this.adalContext.error('Error when acquiring token for resource: ' + resource, error);
-                    cb(null);
-                } else {
-                    cb(tokenOut);
-                }
-            });
-        });
+        var self = this;
+	    return Observable.bindCallback(cb => {
+		    self.adalContext.acquireToken(resource, (error: string, tokenOut: string) => {
+			    if (error) {
+				    self.adalContext.error('Error when acquiring token for resource: ' + resource, error);
+				    cb(null);
+			    } else {
+				    cb(tokenOut);
+			    }
+		    });
+	    });
     }
 
     public getUser(): Observable<adal.User> {
-        return Observable.bindCallback(function (cb: (u: adal.User) => void) {
-            this.adalContext.getUser(function (error: string, user: adal.User) {
-                if (error) {
-                    this.adalContext.error('Error when getting user', error);
-                    cb(null);
-                } else {
-                    cb(user);
-                }
-            });
-        })();
+         var self = this;
+	    return Observable.bindCallback((cb: (u: adal.User) => void) => {
+		    self.adalContext.getUser((error: string, user: adal.User) => {
+			    if (error) {
+				    self.adalContext.error('Error when getting user', error);
+				    cb(null);
+			    } else {
+				    cb(user);
+			    }
+		    });
+	    })();
     }
 
     public clearCache(): void {
